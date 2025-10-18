@@ -255,28 +255,159 @@ The application uses Docker Compose for easy deployment:
 
 ## 📊 API Endpoints
 
-### Authentication
+### Authentication (`/api/auth`)
 - `POST /api/auth/register` - User registration
 - `POST /api/auth/login` - User login
-- `POST /api/auth/google` - Google OAuth
 - `POST /api/auth/forgot-password` - Password reset request
-- `POST /api/auth/reset-password` - Password reset
+- `PUT /api/auth/reset-password` - Password reset
+- `DELETE /api/auth/account` - Delete user account (requires authentication)
+- `GET /api/auth/google` - Initiate Google OAuth login
+- `GET /api/auth/google/callback` - Google OAuth callback
 
-### Books
+### Books (`/api/books`)
 - `GET /api/books` - Get all books
 - `GET /api/books/:id` - Get book by ID
-- `GET /api/books/search` - Search books
 
-### Reviews
-- `GET /api/reviews` - Get all reviews
-- `POST /api/reviews` - Create review
-- `PUT /api/reviews/:id` - Update review
-- `DELETE /api/reviews/:id` - Delete review
+### Reviews (`/api/reviews`)
+- `POST /api/reviews/books/:bookId/reviews` - Create review for a book (requires authentication)
+- `GET /api/reviews/books/:bookId/reviews` - Get all reviews for a specific book
+- `GET /api/reviews/users/:userId/reviews` - Get all reviews by a specific user
+- `PUT /api/reviews/:reviewId` - Update review (requires authentication)
+- `DELETE /api/reviews/:reviewId` - Delete review (requires authentication)
 
-### Users
-- `GET /api/users/profile` - Get user profile
-- `PUT /api/users/profile` - Update user profile
-- `POST /api/users/upload-avatar` - Upload avatar
+### Users (`/api/users`)
+- `GET /api/users/profile` - Get user profile (requires authentication)
+- `PUT /api/users/profile` - Update user profile with optional profile image (requires authentication)
+- `PUT /api/users/email` - Update user email (requires authentication)
+- `PUT /api/users/password` - Update user password (requires authentication)
+
+## 📝 API Request/Response Examples
+
+### Authentication Examples
+
+#### Register User
+```http
+POST /api/auth/register
+Content-Type: application/json
+
+{
+  "displayName": "John Doe",
+  "email": "john@example.com",
+  "password": "securePassword123"
+}
+```
+
+#### Login User
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "email": "john@example.com",
+  "password": "securePassword123"
+}
+```
+
+#### Response (Success)
+```json
+{
+  "success": true,
+  "message": "Login successful",
+  "data": {
+    "user": {
+      "id": 1,
+      "displayName": "John Doe",
+      "email": "john@example.com",
+      "profileImage": "https://example.com/avatar.jpg"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  }
+}
+```
+
+### Book Examples
+
+#### Get All Books
+```http
+GET /api/books
+```
+
+#### Response
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "title": "The Great Gatsby",
+      "author": "F. Scott Fitzgerald",
+      "description": "A classic American novel...",
+      "imageUrl": "https://example.com/book1.jpg",
+      "averageRating": 4.5,
+      "reviewCount": 120
+    }
+  ]
+}
+```
+
+### Review Examples
+
+#### Create Review
+```http
+POST /api/reviews/books/1/reviews
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "rating": 5,
+  "comment": "Excellent book! Highly recommended."
+}
+```
+
+#### Get Book Reviews
+```http
+GET /api/reviews/books/1/reviews
+```
+
+#### Response
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "rating": 5,
+      "comment": "Excellent book! Highly recommended.",
+      "createdAt": "2024-01-15T10:30:00Z",
+      "user": {
+        "id": 1,
+        "displayName": "John Doe",
+        "profileImage": "https://example.com/avatar.jpg"
+      }
+    }
+  ]
+}
+```
+
+### User Profile Examples
+
+#### Get User Profile
+```http
+GET /api/users/profile
+Authorization: Bearer <token>
+```
+
+#### Update User Profile
+```http
+PUT /api/users/profile
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+
+{
+  "displayName": "John Smith",
+  "profileImage": <file>
+}
+```
 
 ## 🤝 Contributing
 
