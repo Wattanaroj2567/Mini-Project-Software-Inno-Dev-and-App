@@ -1,3 +1,4 @@
+// server/server.js
 require("dotenv").config()
 const debug = require("debug")("fictionbook:server")
 const errorLog = require("debug")("fictionbook:error")
@@ -28,6 +29,8 @@ require("events").EventEmitter.defaultMaxListeners = 20
 const app = express()
 
 // ── Middlewares ────────────────────────────────────────────────────────────────
+// Behind ngrok/any proxy, trust the first proxy to let rate-limit and IP logic work
+app.set('trust proxy', 1)
 if (config.server.nodeEnv !== "production") {
   try {
     const morgan = require("morgan")

@@ -1,3 +1,4 @@
+// server/src/core/services/token-service.js
 const jwt = require("jsonwebtoken");
 const config = require("../../config");
 

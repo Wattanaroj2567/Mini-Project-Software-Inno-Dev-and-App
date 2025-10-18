@@ -1,4 +1,23 @@
-export const API_BASE_URL = import.meta.env.VITE_API_BASE || 'http://localhost:8080/api'
+// client/src/lib/url.js
+const envApiBase = import.meta.env.VITE_API_BASE
+
+function resolveApiBase() {
+  if (envApiBase) {
+    if (typeof window !== 'undefined' && envApiBase.startsWith('http')) {
+      return envApiBase
+    }
+    if (typeof window !== 'undefined' && envApiBase.startsWith('/')) {
+      return `${window.location.origin}${envApiBase}`
+    }
+    return envApiBase
+  }
+  if (typeof window !== 'undefined' && window.location) {
+    return `${window.location.origin}/api`
+  }
+  return 'http://localhost:8080/api'
+}
+
+export const API_BASE_URL = resolveApiBase()
 
 export function getApiOrigin() {
   try {

@@ -1,3 +1,4 @@
+// client/src/contexts/AuthContext.jsx
 import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 import api from '../lib/api'
 import { getUser, setUser, getToken, setToken, clearAuth } from '../lib/storage'

@@ -22,15 +22,7 @@ The server listens on `http://localhost:8080` by default.
 - `npm start`: Start in production mode
 - `npm run lint`: Run ESLint
 
-## Documentation
-
-- API: `docs/API.md`
-- Development: `docs/DEVELOPMENT.md`
-- Production: `docs/PRODUCTION.md`
-- Security: `docs/SECURITY.md`
-- Postman collection: `docs/postman_collection.json` (import and set `baseUrl`, `token`)
-
-## Project Structure (high level)
+## Project Structure (high level)ฟ
 
 - `server.js`: Express app entry point
 - `src/model-registry`: Model registry and associations

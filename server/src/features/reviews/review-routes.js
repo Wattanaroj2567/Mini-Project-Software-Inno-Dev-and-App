@@ -1,3 +1,4 @@
+// server/src/features/reviews/review-routes.js
 const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../auth/auth-middleware');

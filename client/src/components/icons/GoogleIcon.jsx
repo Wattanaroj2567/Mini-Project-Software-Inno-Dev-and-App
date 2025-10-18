@@ -1,3 +1,4 @@
+// client/src/components/icons/GoogleIcon.jsx
 import React from 'react'
 
 // Google icon rendered from a base64-encoded SVG background.

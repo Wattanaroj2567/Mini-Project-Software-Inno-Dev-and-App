@@ -1,4 +1,5 @@
-import React, { useEffect } from "react"
+// client/src/components/reviews/CreateReviewForm.jsx
+import React, { useEffect } from "react";
 import {
   Box,
   Button,
@@ -6,13 +7,13 @@ import {
   Rating,
   Typography,
   Stack,
-} from "@mui/material"
-import api from "@/lib/api"
-import { notifySuccess, notifyError } from "@/lib/notify"
-import { useForm, Controller } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { reviewSchema } from "@/lib/schemas"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+} from "@mui/material";
+import api from "@/lib/api";
+import { notifySuccess, notifyError } from "@/lib/notify";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { reviewSchema } from "@/lib/schemas";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function CreateReviewForm({
   bookId,
@@ -20,8 +21,8 @@ export default function CreateReviewForm({
   onReviewSubmitted,
   onCancel,
 }) {
-  const isEditing = !!existingReview
-  const queryClient = useQueryClient()
+  const isEditing = !!existingReview;
+  const queryClient = useQueryClient();
   const {
     control,
     handleSubmit,
@@ -30,41 +31,41 @@ export default function CreateReviewForm({
   } = useForm({
     resolver: zodResolver(reviewSchema),
     defaultValues: { rating: 0, content: "" },
-  })
+  });
 
   useEffect(() => {
     if (isEditing) {
       reset({
         rating: existingReview.rating || 0,
         content: existingReview.content || "",
-      })
+      });
     }
-  }, [existingReview, isEditing, reset])
+  }, [existingReview, isEditing, reset]);
 
   const mutation = useMutation({
     mutationFn: async (payload) => {
-      if (isEditing) return api.put(`/review/${existingReview.id}`, payload)
-      return api.post(`/review/books/${bookId}/reviews`, payload)
+      if (isEditing) return api.put(`/review/${existingReview.id}`, payload);
+      return api.post(`/review/books/${bookId}/reviews`, payload);
     },
     onSuccess: async () => {
       // Refresh review list and book summary (rating/count)
-      await queryClient.invalidateQueries({ queryKey: ["reviews", bookId] })
-      await queryClient.refetchQueries({ queryKey: ["reviews", bookId] })
+      await queryClient.invalidateQueries({ queryKey: ["reviews", bookId] });
+      await queryClient.refetchQueries({ queryKey: ["reviews", bookId] });
       await queryClient.invalidateQueries({
         queryKey: ["book", String(bookId)],
-      })
-      if (onReviewSubmitted) onReviewSubmitted({ created: !isEditing })
-      notifySuccess(isEditing ? "บันทึกการแก้ไขแล้ว" : "ส่งรีวิวเรียบร้อยแล้ว")
+      });
+      if (onReviewSubmitted) onReviewSubmitted({ created: !isEditing });
+      notifySuccess(isEditing ? "บันทึกการแก้ไขแล้ว" : "ส่งรีวิวเรียบร้อยแล้ว");
       if (!isEditing) {
-        reset({ rating: 0, content: "" })
-        if (onCancel) onCancel()
+        reset({ rating: 0, content: "" });
+        if (onCancel) onCancel();
       }
     },
     onError: (err) => {
-      const msg = err?.response?.data?.message || "เกิดข้อผิดพลาดในการส่งรีวิว"
-      notifyError(msg)
+      const msg = err?.response?.data?.message || "เกิดข้อผิดพลาดในการส่งรีวิว";
+      notifyError(msg);
     },
-  })
+  });
 
   return (
     <Box
@@ -148,5 +149,5 @@ export default function CreateReviewForm({
       </Stack>
       {/* Success message handled by toast */}
     </Box>
-  )
+  );
 }

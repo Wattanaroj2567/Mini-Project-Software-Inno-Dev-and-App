@@ -1,5 +1,4 @@
 // src/features/books/book-util.js
-
 function resolveCoverUrl(book) {
   const img = book.coverImage || "";
   if (img && img.startsWith("cover-")) {

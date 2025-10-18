@@ -1,73 +1,90 @@
-version: "3.9"
-
-networks:
-  app-net: {}
-
-volumes:
-  mysql_data: {}
-
 services:
-  mysql:
-    image: mysql:8.0
-    # ไม่ตั้ง container_name เพื่อลดปัญหา alias/เครือข่าย
-    command: >
-      --default-authentication-plugin=caching_sha2_password
-      --character-set-server=utf8mb4
-      --collation-server=utf8mb4_unicode_ci
-    environment:
-      TZ: Asia/Bangkok
-      MYSQL_ROOT_PASSWORD: "268033"
-      MYSQL_DATABASE: "fiction_book_review"
-      MYSQL_USER: "admin"
-      MYSQL_PASSWORD: "Tawan@268033"
-    volumes:
-      - mysql_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p268033"]
-      interval: 5s
-      timeout: 3s
-      retries: 30
-    networks:
-      app-net:
-        aliases:
-          - mysql         # ให้แน่ใจว่าชื่อ 'mysql' ถูก resolve ได้
-
-  server:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-    env_file:
-      - ./server/.env
-    depends_on:
-      mysql:
-        condition: service_healthy
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./server:/app
-      - ./server/uploads:/app/uploads
-      - /app/node_modules
-    # Use npm install because server does not include a package-lock.json
-    command: sh -lc "npm install && npm run dev"
-    networks:
-      app-net: {}
-
+  # Client (React) - Port 5173
   client:
     build:
       context: ./client
       dockerfile: Dockerfile
-    environment:
-      TZ: Asia/Bangkok
-      # ให้ client ชี้ไปยัง API base ที่ถูกต้อง
-      VITE_API_BASE: http://localhost:8080/api
-      CHOKIDAR_USEPOLLING: "true"
-    depends_on:
-      - server
     ports:
       - "5173:5173"
+    environment:
+      - VITE_API_BASE=${VITE_API_BASE}
+      - VITE_PROXY_TARGET=${VITE_PROXY_TARGET}
     volumes:
       - ./client:/app
       - /app/node_modules
-    command: sh -lc "npm ci && npm run dev -- --host 0.0.0.0"
+    command: npm run dev -- --host 0.0.0.0
     networks:
-      app-net: {}
+      - app-network
+
+  # Server (Node.js) - Port 8080
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - CLIENT_ORIGINS=${CLIENT_ORIGINS}
+      - CLIENT_URL=${CLIENT_URL}
+      - SERVER_HOST=${SERVER_HOST}
+      - PORT=${PORT}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_PORT=${EMAIL_PORT}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASS=${EMAIL_PASS}
+      - EMAIL_FROM_ADDRESS=${EMAIL_FROM_ADDRESS}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_CALLBACK_URL=${GOOGLE_CALLBACK_URL}
+    depends_on:
+      - db
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+      - ./server/uploads:/app/uploads
+    networks:
+      - app-network
+
+  # Database (MySQL)
+  db:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - app-network
+
+  # Ngrok for Client only
+  ngrok:
+    image: ngrok/ngrok:latest
+    command: 
+      - "http"
+      - "client:5173"
+      - "--log=stdout"
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    depends_on:
+      - client
+    networks:
+      - app-network
+
+volumes:
+  mysql_data:
+
+networks:
+  app-network:
+    driver: bridge

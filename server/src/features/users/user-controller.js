@@ -1,3 +1,4 @@
+// server/src/features/users/user-controller.js
 const debug = require("debug")("fictionbook:user");
 const { updateProfile, updateEmail, updatePassword } = require("./user-service");
 

@@ -1,3 +1,4 @@
+// server/src/features/auth/auth-service.js
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const { Op } = require("sequelize");
@@ -88,12 +89,73 @@ async function issueResetToken(user) {
   return { resetToken, expiry };
 }
 
+function normalizeOrigin(raw) {
+  if (!raw || typeof raw !== "string") return null;
+  try {
+    const parsed = new URL(raw);
+    return `${parsed.protocol}//${parsed.host}`;
+  } catch {
+    return null;
+  }
+}
+
+function resolveClientUrl(candidateUrl) {
+  const fallback = normalizeOrigin(config.clientUrl) || null;
+  const normalizedCandidate = normalizeOrigin(candidateUrl);
+
+  if (!normalizedCandidate) return fallback;
+
+  const allowList = Array.isArray(config.cors.allowedOrigins)
+    ? config.cors.allowedOrigins
+    : [];
+
+  const allowSet = new Set(
+    allowList
+      .map(normalizeOrigin)
+      .filter(Boolean)
+      .map((origin) => origin.replace(/\/+$/, ""))
+  );
+
+  if (fallback) {
+    allowSet.add(fallback.replace(/\/+$/, ""));
+  }
+
+  const allowAny = allowSet.size === 0;
+  const normalized = normalizedCandidate.replace(/\/+$/, "");
+
+  let allowNgrok = false;
+  if (config.server.nodeEnv !== "production") {
+    try {
+      const candidateHost = new URL(normalizedCandidate).hostname;
+      allowNgrok = /\.ngrok(?:-free)?\.dev$/.test(candidateHost);
+    } catch {
+      allowNgrok = false;
+    }
+  }
+
+  if (allowAny || allowSet.has(normalized) || allowNgrok) {
+    return normalized;
+  }
+
+  return fallback;
+}
+
 async function forgotPassword({ email, clientUrl }) {
   const user = await User.findOne({ where: { email } });
-  if (!user) return;
+  if (!user) {
+    return { dispatched: false };
+  }
+
   const { resetToken } = await issueResetToken(user);
-  const link = `${clientUrl || config.clientUrl}/reset-password?token=${resetToken}`;
-  await emailService.sendPasswordResetEmail(user, link);
+  const baseUrl = resolveClientUrl(clientUrl) || normalizeOrigin(config.clientUrl);
+  if (!baseUrl) {
+    const err = new Error("ไม่สามารถระบุที่อยู่สำหรับลิงก์รีเซ็ตรหัสผ่านได้");
+    err.status = 500;
+    throw err;
+  }
+  const resetLink = `${baseUrl}/reset-password?token=${resetToken}`;
+  const info = await emailService.sendPasswordResetEmail(user, resetLink);
+  return { dispatched: true, resetLink, meta: info };
 }
 
 async function resetPassword({ token, newPassword }) {

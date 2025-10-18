@@ -1,3 +1,4 @@
+// client/src/components/common/AutoWidthTextField.jsx
 import React, { useMemo } from 'react'
 import TextField from '@mui/material/TextField'
 

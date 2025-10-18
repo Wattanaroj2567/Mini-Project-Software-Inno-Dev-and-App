@@ -1,3 +1,4 @@
+// server/src/core/services/email-service.js
 const { sendEmail } = require("../../config/mailer");
 
 async function sendPasswordResetEmail(user, link) {

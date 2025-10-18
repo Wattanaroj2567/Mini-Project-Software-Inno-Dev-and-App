@@ -1,49 +1,147 @@
-import React, { useState } from 'react'
-import { Alert, Box, Button, Divider, Paper, Stack, TextField, Typography, Link } from '@mui/material'
-import { Link as RouterLink } from 'react-router-dom'
-import api from '@/lib/api'
-import { notifySuccess, notifyError } from '@/lib/notify'
+//  client/src/pages/ForgotPassword.jsx
+import React, { useState } from "react";
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  Divider,
+  Link,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { Link as RouterLink } from "react-router-dom";
+import api from "@/lib/api";
+import { notifySuccess, notifyError } from "@/lib/notify";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { emailRequiredSchema } from "@/lib/schemas";
 
 export default function ForgotPassword() {
-  const [email, setEmail] = useState('')
-  const [msg, setMsg] = useState('')
-  const [loading, setLoading] = useState(false)
-
-  const onSubmit = async (e) => {
-    e.preventDefault()
-    setMsg('')
-    setLoading(true)
-    try {
-      await api.post('/auth/forgot-password', { email })
-      setMsg('ถ้ามีอีเมลนี้ในระบบ ระบบจะส่งลิงก์รีเซ็ตให้ทันที')
-      notifySuccess('ส่งลิงก์รีเซ็ตไปที่อีเมลแล้ว')
-      setEmail('')
-    } catch (err) {
-      setMsg(err?.response?.data?.message || 'ไม่สามารถส่งคำขอรีเซ็ตรหัสผ่านได้')
-      notifyError(err?.response?.data?.message || 'ส่งคำขอรีเซ็ตไม่สำเร็จ')
-    } finally {
-      setLoading(false)
+  const [feedback, setFeedback] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(emailRequiredSchema),
+    defaultValues: { email: "" },
+  });
+  const renderMessage = () => {
+    if (!feedback) return null;
+    if (feedback.type === "info") {
+      return (
+        <Stack spacing={0.75}>
+          <Typography variant="body2" component="span">
+            {feedback.message ||
+              `หากมีอีเมลนี้ในระบบ ระบบจะส่งลิงก์รีเซ็ตไปให้ทันที ตรวจสอบกล่องอีเมลของคุณที่ ${feedback.email}`}
+          </Typography>
+          {feedback.previewResetLink && (
+            <Typography variant="caption" component="span">
+              สำหรับทดสอบ:{" "}
+              <Link
+                href={feedback.previewResetLink}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                เปิดลิงก์รีเซ็ต
+              </Link>
+            </Typography>
+          )}
+        </Stack>
+      );
     }
-  }
+    return feedback.message;
+  };
+
+  const onSubmit = async ({ email }) => {
+    setFeedback(null);
+    setLoading(true);
+    try {
+      const clientOrigin =
+        typeof window !== "undefined" && window.location
+          ? window.location.origin
+          : undefined;
+      const { data } = await api.post("/auth/forgot-password", {
+        email,
+        clientUrl: clientOrigin,
+      });
+      const successMessage =
+        data?.message ||
+        `หากมีอีเมลนี้ในระบบ ระบบจะส่งลิงก์รีเซ็ตไปให้ทันที ตรวจสอบกล่องอีเมลของคุณที่ ${email}`;
+      setFeedback({
+        type: "info",
+        email,
+        message: successMessage,
+        previewResetLink: data?.previewResetLink,
+      });
+      notifySuccess(successMessage);
+      reset({ email: "" });
+    } catch (err) {
+      const raw = err?.response?.data?.message;
+      const fallback = "ส่งคำขอรีเซ็ตไม่สำเร็จ";
+      setFeedback({
+        type: "error",
+        key: raw ? null : "toastForgotFail",
+        message: raw || fallback,
+      });
+      notifyError(raw || fallback);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <Box sx={{ display: 'grid', placeItems: 'center', minHeight: '70vh', px: 2 }}>
-      <Paper elevation={3} sx={{ p: 4, width: '100%', maxWidth: 560 }}>
+    <Box
+      sx={{ display: "grid", placeItems: "center", minHeight: "70vh", px: 2 }}
+    >
+      <Paper elevation={3} sx={{ p: 4, width: "100%", maxWidth: 560 }}>
         <Stack spacing={2}>
           <Typography variant="h5">ลืมรหัสผ่าน</Typography>
-          {msg && <Alert severity={msg.startsWith('ถ้า') ? 'info' : 'error'}>{msg}</Alert>}
-          <Box component="form" onSubmit={onSubmit}>
+          {feedback && (
+            <Alert severity={feedback.type === "info" ? "info" : "error"}>
+              {renderMessage()}
+            </Alert>
+          )}
+          <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
             <Stack spacing={2}>
-              <TextField label="อีเมล" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required fullWidth />
-              <Button type="submit" variant="contained" size="large" disabled={loading} fullWidth>ส่งลิงก์รีเซ็ต</Button>
+              <TextField
+                label="อีเมล"
+                type="email"
+                fullWidth
+                InputLabelProps={{ required: false }}
+                {...register("email")}
+                error={!!errors.email}
+                helperText={errors.email?.message}
+              />
+              <Button
+                type="submit"
+                variant="contained"
+                size="large"
+                disabled={loading || isSubmitting}
+                fullWidth
+              >
+                {loading || isSubmitting ? (
+                  <CircularProgress size={22} color="inherit" />
+                ) : (
+                  "ส่งลิงก์รีเซ็ต"
+                )}
+              </Button>
             </Stack>
           </Box>
           <Divider flexItem sx={{ my: 1 }} />
-          <Typography variant="body2" sx={{ textAlign: 'left' }}>
-            จำรหัสผ่านได้แล้ว? <Link component={RouterLink} to="/login">กลับไปเข้าสู่ระบบ</Link>
+          <Typography variant="body2" sx={{ textAlign: "left" }}>
+            จำรหัสผ่านได้แล้ว?{" "}
+            <Link component={RouterLink} to="/login">
+              กลับไปเข้าสู่ระบบ
+            </Link>
           </Typography>
         </Stack>
       </Paper>
     </Box>
-  )
+  );
 }

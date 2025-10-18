@@ -1,3 +1,4 @@
+// server/src/features/books/book-model.js
 const { DataTypes } = require("sequelize")
 const { sequelize } = require("../../config/database")
 

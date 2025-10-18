@@ -1,3 +1,4 @@
+// server/src/core/middleware/cors.js
 const cors = require("cors");
 const config = require("../../config");
 

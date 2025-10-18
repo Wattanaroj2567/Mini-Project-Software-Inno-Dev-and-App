@@ -1,3 +1,4 @@
+// server/src/features/reviews/review-controller.js
 const debug = require("debug")("fictionbook:controllers:review");
 const { Review, Book, User } = require("../../model-registry");
 const config = require("../../config");

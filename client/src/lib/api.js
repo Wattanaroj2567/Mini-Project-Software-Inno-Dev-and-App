@@ -1,9 +1,9 @@
+// client/src/lib/api.js
 import axios from 'axios'
 import { getToken, clearAuth } from './storage'
+import { API_BASE_URL } from './url'
 
-const baseURL = import.meta.env.VITE_API_BASE || 'http://localhost:8080/api'
-
-export const api = axios.create({ baseURL })
+export const api = axios.create({ baseURL: API_BASE_URL })
 
 // Attach token
 api.interceptors.request.use((config) => {
@@ -24,4 +24,3 @@ api.interceptors.response.use(
 )
 
 export default api
-

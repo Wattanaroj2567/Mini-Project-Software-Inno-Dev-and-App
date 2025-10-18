@@ -1,3 +1,4 @@
+// server/src/features/books/book-controller.js
 const debug = require("debug")("fictionbook:book");
 const { Book, Review } = require("../../model-registry");
 const { fn, col, literal } = require("sequelize");

@@ -1,3 +1,4 @@
+// server/src/features/auth/auth-routes.js
 const express = require("express");
 const router = express.Router();
 const passport = require("passport");
@@ -13,7 +14,17 @@ router.delete("/account", authenticate, authController.deleteAccount);
 
 // Google OAuth
 router.get("/google", (req, res, next) => {
-  const state = req.query.state ? Buffer.from(req.query.state).toString('base64') : undefined;
+  const stateParam = req.query.state;
+  const base64Pattern = /^[A-Za-z0-9+/=]+$/;
+  const isMaybeBase64 =
+    typeof stateParam === "string" &&
+    base64Pattern.test(stateParam) &&
+    stateParam.length % 4 === 0;
+  const state = stateParam
+    ? isMaybeBase64
+      ? stateParam
+      : Buffer.from(stateParam).toString("base64")
+    : undefined;
   // Ask for offline access to receive a refresh_token
   const options = {
     scope: ['openid', 'profile', 'email'],

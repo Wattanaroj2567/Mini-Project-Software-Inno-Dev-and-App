@@ -1,3 +1,4 @@
+// client/src/lib/schemas.js
 import { z } from "zod"
 
 export const loginSchema = z.object({
@@ -39,11 +40,19 @@ export const usernameSchema = z.object({
 })
 
 export const emailChangeSchema = z.object({
-  newEmail: z.string().email("อีเมลไม่ถูกต้อง"),
+  newEmail: z.string().min(1, "กรอกอีเมลใหม่").email("อีเมลไม่ถูกต้อง"),
   password: z.string().min(1, "กรอกรหัสผ่าน"),
 })
 
 export const passwordChangeSchema = z.object({
   oldPassword: z.string().min(1, "กรอกรหัสผ่านเดิม"),
   newPassword: z.string().min(6, "อย่างน้อย 6 ตัวอักษร"),
+})
+
+export const emailRequiredSchema = z.object({
+  email: z.string().min(1, "กรอกอีเมล").email("อีเมลไม่ถูกต้อง"),
+})
+
+export const resetPasswordSchema = z.object({
+  newPassword: z.string().min(6, "รหัสผ่านใหม่อย่างน้อย 6 ตัวอักษร"),
 })

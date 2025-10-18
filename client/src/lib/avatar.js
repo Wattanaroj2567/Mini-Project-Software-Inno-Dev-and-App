@@ -1,7 +1,4 @@
-// Utilities for rendering user avatars
-
-// Deterministically map a string to an HSL color.
-// This gives a "random"-looking but stable color per user.
+// client/src/lib/avatar.js
 export function colorFromString(input, { saturation = 65, lightness = 55 } = {}) {
   const str = String(input || '')
   if (!str) {

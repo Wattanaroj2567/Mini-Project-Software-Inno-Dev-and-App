@@ -1,3 +1,4 @@
+// client/src/components/common/ErrorAlert.jsx
 import React from 'react'
 import { Alert } from '@mui/material'
 

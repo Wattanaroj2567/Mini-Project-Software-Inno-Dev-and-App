@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+// client/src/components/reviews/ReviewItem.jsx
+import React, { useState, useEffect } from 'react';
+import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import { Avatar, Box, Button, Paper, Rating, Stack, Typography } from '@mui/material';
 import { useAuth } from '@/contexts/useAuth';
 import api from '@/lib/api';
@@ -8,11 +10,26 @@ import { toApiAsset, resolveProfileImagePath } from '@/lib/url';
 import { colorFromString, initialFromName } from '@/lib/avatar';
 import CreateReviewForm from './CreateReviewForm';
 
-export default function ReviewItem({ review, onReviewDeleted, onReviewUpdated }) {
+export default function ReviewItem({ review, onReviewDeleted, onReviewUpdated, editFormRef }) {
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  // Scroll to edit form when entering edit mode
+  useEffect(() => {
+    if (isEditing && editFormRef?.current) {
+      setTimeout(() => {
+        editFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 200);
+    }
+  }, [isEditing, editFormRef]);
+  const [openDelete, setOpenDelete] = useState(false);
 
   const isOwner = user && user.id === review.User.id;
+
+  const scrollToAppBar = () => {
+    const headerEl = document.querySelector('header');
+    const safeOffset = headerEl?.offsetTop || 0;
+    window.scrollTo({ top: Math.max(0, safeOffset), behavior: 'smooth' });
+  };
 
   const queryClient = useQueryClient()
   const delMutation = useMutation({
@@ -30,17 +47,30 @@ export default function ReviewItem({ review, onReviewDeleted, onReviewUpdated })
     },
   })
 
-  const handleDelete = async () => {
-    if (window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบรีวิวนี้?')) {
-      delMutation.mutate()
-    }
+  const handleDelete = () => {
+    setOpenDelete(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    setOpenDelete(false);
+    delMutation.mutate();
+  };
+
+  const handleDeleteCancel = () => {
+    setOpenDelete(false);
   };
 
   const handleUpdateSuccess = () => {
     setIsEditing(false);
+    setTimeout(scrollToAppBar, 200);
     if (onReviewUpdated) {
       onReviewUpdated();
     }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setTimeout(scrollToAppBar, 200);
   };
 
   const name = review.User.displayName || review.User.username || 'User'
@@ -50,7 +80,7 @@ export default function ReviewItem({ review, onReviewDeleted, onReviewUpdated })
   const initial = initialFromName(review.User.displayName, review.User.username)
 
   return (
-    <Paper sx={{ p: 2, mb: 2, borderRadius: 3, borderColor: 'divider', bgcolor: 'background.paper' }} variant="outlined" elevation={0}>
+    <Paper sx={{ p: 2, mb: 2, borderRadius: 2, borderColor: 'divider', bgcolor: 'background.paper' }} variant="outlined" elevation={0}>
       <Stack spacing={2}>
         <Stack direction="row" spacing={2} alignItems="center">
           <Avatar alt={name} src={avatarSrc} imgProps={{ referrerPolicy: 'no-referrer' }} sx={{ bgcolor: avatarBg }}>
@@ -66,13 +96,14 @@ export default function ReviewItem({ review, onReviewDeleted, onReviewUpdated })
 
         {isEditing ? (
           <>
+            <div ref={editFormRef} />
             <CreateReviewForm
               bookId={review.bookId}
               existingReview={review}
               onReviewSubmitted={handleUpdateSuccess}
             />
             <Stack direction="row" justifyContent="flex-end">
-              <Button size="small" onClick={() => setIsEditing(false)}>ยกเลิก</Button>
+              <Button size="small" onClick={handleCancelEdit}>ยกเลิก</Button>
             </Stack>
           </>
         ) : (
@@ -86,6 +117,32 @@ export default function ReviewItem({ review, onReviewDeleted, onReviewUpdated })
           <Stack direction="row" spacing={1} justifyContent="flex-end">
             <Button size="small" onClick={() => setIsEditing(true)}>แก้ไข</Button>
             <Button size="small" color="error" onClick={handleDelete}>ลบ</Button>
+            <Dialog
+              open={openDelete}
+              onClose={handleDeleteCancel}
+              disableScrollLock={true}
+              PaperProps={{
+                sx: {
+                  m: 0,
+                  position: 'fixed',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  minWidth: 320,
+                }
+              }}
+            >
+              <DialogTitle>ยืนยันการลบรีวิว</DialogTitle>
+              <DialogContent sx={{ overflow: 'visible', minWidth: 320, p: 2 }}>
+                <DialogContentText>
+                  คุณแน่ใจหรือไม่ว่าต้องการลบรีวิวนี้? การลบจะไม่สามารถย้อนกลับได้
+                </DialogContentText>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={handleDeleteCancel} color="inherit">ยกเลิก</Button>
+                <Button onClick={handleDeleteConfirm} color="error" variant="contained" autoFocus>ลบ</Button>
+              </DialogActions>
+            </Dialog>
           </Stack>
         )}
       </Stack>

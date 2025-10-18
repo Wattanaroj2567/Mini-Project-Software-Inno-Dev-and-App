@@ -1,3 +1,4 @@
+// server/src/core/middleware/security.js
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 

@@ -1,3 +1,4 @@
+// server/src/features/users/user-routes.js
 const express = require("express");
 const router = express.Router();
 const userController = require("./user-controller");

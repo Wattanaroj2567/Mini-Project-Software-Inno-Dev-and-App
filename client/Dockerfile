@@ -1,20 +1,18 @@
-# ใช้ Node.js base image
-FROM node:22
+FROM node:22-alpine
 
-# ตั้งค่า working directory
 WORKDIR /app
 
-# คัดลอกไฟล์ package.json และ package-lock.json
+# Copy package files
 COPY package*.json ./
 
-# ติดตั้ง dependencies
-RUN npm install
+# Install dependencies
+RUN npm ci
 
-# คัดลอกโค้ดทั้งหมดไปยัง container
+# Copy source code
 COPY . .
 
-# เปิดพอร์ตที่ Vite ใช้
+# Expose port
 EXPOSE 5173
 
-# คำสั่งเริ่มต้น
-CMD ["npm", "run", "dev"]
+# Start development server
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

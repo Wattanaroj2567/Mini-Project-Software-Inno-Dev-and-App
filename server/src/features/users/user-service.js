@@ -1,3 +1,4 @@
+// server/src/features/users/user-service.js
 const bcrypt = require("bcryptjs");
 const { User } = require("../../model-registry");
 const fileService = require("../../core/services/file-service");

@@ -1,3 +1,4 @@
+// client/src/lib/notify.js
 import toast from 'react-hot-toast'
 
 export function notifySuccess(message, options) {
